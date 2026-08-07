@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BKLYN RIDE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    background: #0a0a0f;
+    color: #f0efe8;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .app {
+    max-width: 420px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    background: linear-gradient(180deg, #0d1117 0%, #111820 100%);
+    border-left: 1px solid #1a1f2a;
+    border-right: 1px solid #1a1f2a;
+    overflow: hidden;
+  }
+  .map-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 65vh;
+    background:
+      radial-gradient(circle at 30% 40%, #1a2a1a 0%, transparent 50%),
+      radial-gradient(circle at 70% 30%, #1a1a2a 0%, transparent 40%),
+      linear-gradient(180deg, #0f1a12 0%, #111820 100%);
+    opacity: 0.9;
+  }
+  .grid-lines {
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 65vh;
+    background:
+      repeating-linear-gradient(90deg, transparent, transparent 39px, #ffffff06 39px, #ffffff06 40px),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, #ffffff06 39px, #ffffff06 40px);
+  }
+  .street-label {
+    position: absolute;
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff18;
+    font-weight: 600;
+  }
+  .s1 { top: 18%; left: 10%; transform: rotate(-12deg); }
+  .s2 { top: 35%; left: 55%; transform: rotate(0deg); }
+  .s3 { top: 50%; left: 8%; transform: rotate(-12deg); }
+  .s4 { top: 28%; left: 25%; transform: rotate(0deg); }
+
+  .bike-dot {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #4afa8b;
+    box-shadow: 0 0 12px #4afa8b88, 0 0 4px #4afa8b;
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  .bike-dot::after {
+    content: attr(data-count);
+    position: absolute;
+    top: -18px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 700;
+    color: #4afa8b;
+    background: #0d1117cc;
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .bike-dot.low { background: #faaa4a; box-shadow: 0 0 12px #faaa4a88; }
+  .bike-dot.low::after { color: #faaa4a; }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.7; }
+  }
+  .d1 { top: 22%; left: 28%; animation-delay: 0s; }
+  .d2 { top: 15%; left: 62%; animation-delay: 0.4s; }
+  .d3 { top: 38%; left: 45%; animation-delay: 0.8s; }
+  .d4 { top: 42%; left: 18%; animation-delay: 1.2s; }
+  .d5 { top: 30%; left: 75%; animation-delay: 0.2s; }
+  .d6 { top: 52%; left: 55%; animation-delay: 1.6s; }
+  .d7 { top: 48%; left: 35%; animation-delay: 0.6s; }
+  .d8 { top: 20%; left: 42%; animation-delay: 1.0s; }
+
+  .top-bar {
+    position: relative;
+    z-index: 2;
+    padding: 52px 24px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .logo {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .logo span { color: #4afa8b; }
+  .logo small {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #ffffff44;
+    font-weight: 400;
+    margin-top: 4px;
+  }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #4afa8b;
+    background: #4afa8b11;
+    border: 1px solid #4afa8b33;
+    padding: 5px 12px;
+    border-radius: 20px;
+    margin-top: 4px;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: #4afa8b;
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .stats-row {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    margin-top: 8px;
+  }
+  .stat-card {
+    flex: 1;
+    background: #ffffff08;
+    border: 1px solid #ffffff0f;
+    border-radius: 14px;
+    padding: 14px;
+    backdrop-filter: blur(8px);
+  }
+  .stat-num {
+    font-size: 26px;
+    font-weight: 700;
+    color: #f0efe8;
+    line-height: 1;
+  }
+  .stat-num span { color: #4afa8b; font-size: 14px; }
+  .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #ffffff44;
+    margin-top: 4px;
+  }
+
+  .bottom-sheet {
+    position: relative;
+    z-index: 2;
+    background: linear-gradient(180deg, #13181f 0%, #0f1318 100%);
+    border-top: 1px solid #ffffff0f;
+    border-radius: 28px 28px 0 0;
+    padding: 20px 24px 40px;
+    margin-top: auto;
+    min-height: 35vh;
+  }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: #ffffff1a;
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .pitch {
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.3px;
+    margin-bottom: 20px;
+    max-width: 300px;
+  }
+  .pitch em {
+    font-style: normal;
+    color: #4afa8b;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background: #ffffff0a;
+    border: 1px solid #ffffff12;
+    border-radius: 16px;
+    padding: 4px 4px 4px 18px;
+    gap: 10px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    cursor: text;
+  }
+  .search-bar:focus-within {
+    border-color: #4afa8b44;
+    box-shadow: 0 0 20px #4afa8b11;
+  }
+  .search-bar input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #f0efe8;
+    font-family: inherit;
+    font-size: 15px;
+    outline: none;
+  }
+  .search-bar input::placeholder { color: #ffffff33; }
+  .go-btn {
+    background: #4afa8b;
+    color: #0a0a0f;
+    border: none;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 22px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .go-btn:hover { background: #6bffa5; transform: scale(1.03); }
+  .go-btn:active { transform: scale(0.97); }
+
+  .result {
+    margin-top: 16px;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.5s ease, opacity 0.4s ease;
+    opacity: 0;
+  }
+  .result.show { max-height: 200px; opacity: 1; }
+  .result-card {
+    background: #4afa8b0d;
+    border: 1px solid #4afa8b22;
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .result-icon {
+    width: 44px; height: 44px;
+    background: #4afa8b18;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .result-info h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .result-info p {
+    font-size: 12px;
+    color: #ffffff55;
+  }
+  .result-info .avail {
+    color: #4afa8b;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="map-bg"></div>
+  <div class="grid-lines"></div>
+
+  <div class="street-label s1">Bedford Ave</div>
+  <div class="street-label s2">Flushing Ave</div>
+  <div class="street-label s3">Myrtle Ave</div>
+  <div class="street-label s4">Kent Ave</div>
+
+  <div class="bike-dot d1" data-count="8"></div>
+  <div class="bike-dot d2" data-count="14"></div>
+  <div class="bike-dot d3" data-count="5"></div>
+  <div class="bike-dot d4 low" data-count="2"></div>
+  <div class="bike-dot d5" data-count="11"></div>
+  <div class="bike-dot d6" data-count="7"></div>
+  <div class="bike-dot d7 low" data-count="3"></div>
+  <div class="bike-dot d8" data-count="9"></div>
+
+  <div class="top-bar">
+    <div class="logo">BKLYN<span>RIDE</span><small>Brooklyn, NY</small></div>
+    <div class="live-badge"><div class="live-dot"></div> 847 bikes live</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">342</div>
+      <div class="stat-label">Stations</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">847</div>
+      <div class="stat-label">Available</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">2<span>min</span></div>
+      <div class="stat-label">Nearest</div>
+    </div>
+  </div>
+
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="pitch">Every bike in Brooklyn.<br><em>One glance.</em></div>
+
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Where are you heading?" autocomplete="off">
+      <button class="go-btn" id="goBtn">FIND</button>
+    </div>
+
+    <div class="result" id="result">
+      <div class="result-card">
+        <div class="result-icon">&#x1f6b2;</div>
+        <div class="result-info">
+          <h3 id="stationName">Bedford & N 7th St</h3>
+          <p><span class="avail" id="bikeCount">8 bikes</span> &middot; <span id="walkTime">2 min walk</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const stations = [
+    { name: "Bedford & N 7th St", bikes: 8, walk: "2 min walk" },
+    { name: "Kent Ave & S 1st St", bikes: 14, walk: "4 min walk" },
+    { name: "Myrtle & Nostrand", bikes: 5, walk: "3 min walk" },
+    { name: "Flushing & Classon", bikes: 11, walk: "5 min walk" },
+    { name: "DeKalb & Vanderbilt", bikes: 7, walk: "1 min walk" },
+    { name: "Atlantic & Flatbush", bikes: 3, walk: "6 min walk" },
+    { name: "Smith & Bergen St", bikes: 9, walk: "3 min walk" },
+  ];
+
+  const goBtn = document.getElementById("goBtn");
+  const result = document.getElementById("result");
+  const stationName = document.getElementById("stationName");
+  const bikeCount = document.getElementById("bikeCount");
+  const walkTime = document.getElementById("walkTime");
+  const searchInput = document.getElementById("searchInput");
+
+  goBtn.addEventListener("click", () => {
+    const s = stations[Math.floor(Math.random() * stations.length)];
+    stationName.textContent = s.name;
+    bikeCount.textContent = s.bikes + " bikes";
+    walkTime.textContent = s.walk;
+    result.classList.add("show");
+    goBtn.textContent = "FOUND";
+    setTimeout(() => { goBtn.textContent = "FIND"; }, 1500);
+  });
+
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") goBtn.click();
+  });
+</script>
+</body>
+</html>
